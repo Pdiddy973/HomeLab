@@ -18,16 +18,11 @@ file       himalia   /etc/wireguard/wg0.conf                       hosts/himalia
 compose    leda      /opt/stacks/tanglecrew/docker-compose.yml     hosts/leda/tanglecrew/docker-compose.yml
 env        leda      /opt/stacks/tanglecrew/.env                   hosts/leda/tanglecrew/.env.example
 compose    elara     /opt/stacks/wg-easy/docker-compose.yml        hosts/elara/wg-easy/docker-compose.yml
+file       elara     /usr/local/sbin/wg-easy-lock.sh               hosts/elara/wg-easy-lock.sh
 compose    rhea      /opt/stacks/rhea/docker-compose.yml           hosts/rhea/rhea/docker-compose.yml
 file       rhea      /opt/stacks/rhea/Caddyfile                    hosts/rhea/rhea/Caddyfile
 compose    ananke    /opt/stacks/frigate/docker-compose.yml        hosts/ananke/frigate/docker-compose.yml
 file       ananke    /opt/stacks/frigate/config/config.yml         hosts/ananke/frigate/config.yml
 compose    iapetus   /opt/stacks/semaphore/compose.yaml            hosts/iapetus/semaphore/compose.yaml
 env        iapetus   /opt/stacks/semaphore/.env                    hosts/iapetus/semaphore/.env.example
-compose    leda      /opt/stacks/tanglecrew/docker-compose.yml     hosts/leda/tanglecrew/docker-compose.yml
-env        leda      /opt/stacks/tanglecrew/.env                   hosts/leda/tanglecrew/.env.example
-compose    rhea      /opt/stacks/rhea/docker-compose.yml           hosts/rhea/rhea/docker-compose.yml
-file       rhea      /opt/stacks/rhea/Caddyfile                    hosts/rhea/rhea/Caddyfile
 file       rhea      /etc/openbao/openbao.hcl                      hosts/rhea/openbao.hcl
-compose    iapetus   /opt/stacks/semaphore/compose.yaml            hosts/iapetus/semaphore/compose.yaml
-env        iapetus   /opt/stacks/semaphore/.env                    hosts/iapetus/semaphore/.env.example
