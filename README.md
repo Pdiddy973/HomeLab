@@ -21,7 +21,6 @@ hosts/
       docker-compose.yml
       .env.example
 ansible/           inventory and playbooks that Semaphore on iapetus runs
-legacy/            older stacks from before the rebuild
 scripts/
   sync.py          pulls files from the hosts and strips secrets
   manifest.txt     which files to pull
