@@ -1,0 +1,17 @@
+- name: List pending package updates without installing them
+  hosts: basic_test
+  gather_facts: false
+  tasks:
+    - name: Refresh the package lists
+      ansible.builtin.apt:
+        update_cache: true
+      changed_when: false
+
+    - name: List upgradable packages
+      ansible.builtin.command: apt list --upgradable
+      register: upgradable
+      changed_when: false
+
+    - name: Show them
+      ansible.builtin.debug:
+        msg: "{{ upgradable.stdout_lines[1:] | default([]) }}"
