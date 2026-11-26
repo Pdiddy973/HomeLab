@@ -1,0 +1,6 @@
+- name: Check Ansible can reach each host
+  hosts: basic_test
+  gather_facts: false
+  tasks:
+    - name: Ping
+      ansible.builtin.ping:
