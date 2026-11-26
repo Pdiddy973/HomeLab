@@ -20,6 +20,7 @@ hosts/
     <stack>/
       docker-compose.yml
       .env.example
+ansible.cfg        Ansible settings, read from the repo root
 ansible/           inventory and playbooks that Semaphore on iapetus runs
 scripts/
   sync.py          pulls files from the hosts and strips secrets

@@ -15,6 +15,8 @@ KEEP_KEYS = {'TZ', 'PUID', 'PGID', 'UMASK', 'LOG_LEVEL', 'COMPOSE_PROJECT_NAME'}
 
 # lines in config files whose values are replaced
 REDACT = re.compile(r'(?im)^(\s*(?:PrivateKey|PresharedKey|password|passwd|secret|token)\s*[=:]\s*).+$')
+# NUT upsmon.conf: MONITOR <ups> <power> <user> <password> <role>
+REDACT_NUT = re.compile(r'(?im)^(\s*MONITOR\s+\S+\s+\d+\s+\S+\s+)\S+')
 
 # anything matching these stops the run
 SCANS = [
@@ -68,6 +70,7 @@ def main():
             text = make_example(text)
         elif kind == 'file':
             text = REDACT.sub(lambda m: m.group(1) + 'CHANGE_ME', text)
+            text = REDACT_NUT.sub(lambda m: m.group(1) + 'CHANGE_ME', text)
         elif kind != 'compose':
             sys.exit(f'unknown kind {kind!r} in manifest')
         files[dest] = text
