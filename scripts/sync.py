@@ -4,7 +4,7 @@
 Run from the repo root:  python3 scripts/sync.py [--push]
 Reads scripts/manifest.txt. Nothing is written if a possible secret is found.
 """
-import re, shlex, subprocess, sys
+import base64, re, shlex, subprocess, sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -27,13 +27,23 @@ SCANS = [
     ('hard-coded secret', re.compile(r'(?i)(?:password|passwd|secret|token|api[_-]?key)["\']?\s*[:=]\s*["\']?(?!CHANGE_ME|<|\$\{|\$\()[^\s"\'#]{8,}')),
 ]
 
-def fetch(host, path):
+def fetch_host(host, paths):
+    """Read every path on one host over a single SSH connection; returns {path: text}."""
     if host == 'local':
-        return Path(path).read_text()
-    r = subprocess.run(['ssh', '-o', 'BatchMode=yes', host, 'cat', path], capture_output=True, text=True)
-    if r.returncode:
-        sys.exit(f'cannot read {host}:{path}: {r.stderr.strip()}')
-    return r.stdout
+        return {p: Path(p).read_text() for p in paths}
+    # one line per file: base64 of its contents, or MISSING
+    cmd = '; '.join(f'(base64 -w0 -- {shlex.quote(p)} 2>/dev/null || printf MISSING); echo' for p in paths)
+    r = subprocess.run(['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', host, cmd],
+                       capture_output=True, text=True)
+    lines = r.stdout.splitlines()
+    if r.returncode or len(lines) != len(paths):
+        sys.exit(f'cannot read from {host}: {r.stderr.strip() or "unexpected output"}')
+    out = {}
+    for p, line in zip(paths, lines):
+        if line == 'MISSING':
+            sys.exit(f'cannot read {host}:{p}: missing or unreadable')
+        out[p] = base64.b64decode(line).decode('utf-8')
+    return out
 
 def make_example(text):
     out = []
@@ -59,11 +69,20 @@ def scan(files):
 
 def main():
     files = {}
+    entries = []
     for raw in MANIFEST.read_text().splitlines():
         if not raw.strip() or raw.lstrip().startswith('#'):
             continue
-        kind, host, remote, dest = shlex.split(raw, comments=True)
-        text = fetch(host, remote)
+        entries.append(shlex.split(raw, comments=True))
+
+    # group by host so each host gets one SSH connection
+    texts = {}
+    for host in dict.fromkeys(e[1] for e in entries):
+        for path, text in fetch_host(host, [e[2] for e in entries if e[1] == host]).items():
+            texts[(host, path)] = text
+
+    for kind, host, remote, dest in entries:
+        text = texts[(host, remote)]
         if kind == 'env':
             if not dest.endswith('.env.example'):
                 sys.exit(f'env entries must end in .env.example: {dest}')
