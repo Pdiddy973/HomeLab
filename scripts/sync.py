@@ -33,7 +33,9 @@ def fetch_host(host, paths):
         return {p: Path(p).read_text() for p in paths}
     # one line per file: base64 of its contents, or MISSING
     cmd = '; '.join(f'(base64 -w0 -- {shlex.quote(p)} 2>/dev/null || printf MISSING); echo' for p in paths)
-    r = subprocess.run(['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', host, cmd],
+    print(f'{host}: reading {len(paths)} files...', flush=True)
+    r = subprocess.run(['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10',
+                        '-o', 'ServerAliveInterval=5', '-o', 'ServerAliveCountMax=3', host, cmd],
                        capture_output=True, text=True)
     lines = r.stdout.splitlines()
     if r.returncode or len(lines) != len(paths):
