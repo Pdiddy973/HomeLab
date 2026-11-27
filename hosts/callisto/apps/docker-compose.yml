@@ -1,0 +1,83 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    container_name: mealie
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - ALLOW_SIGNUP=false
+      - BASE_URL=https://mealie.remoteproxy.tech
+    volumes:
+      - ./config/mealie:/app/data
+    ports:
+      - "9000:9000"
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    env_file:
+      - ./homepage.env
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=10.0.30.21:3000,homepage.home.remoteproxy.tech
+      - TZ=${TZ}
+    volumes:
+      - ./config/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "3000:3000"
+
+  opencloud:
+    image: opencloudeu/opencloud-rolling:latest
+    user: "3000:3000"
+    container_name: opencloud
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c", "opencloud init || true; opencloud server"]
+    environment:
+      - OC_URL=https://cloud.remoteproxy.tech
+      - OC_INSECURE=true
+      - PROXY_HTTP_ADDR=0.0.0.0:9200
+      - PROXY_TLS=false
+      - IDM_ADMIN_PASSWORD=${OC_ADMIN_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - ./config/opencloud:/etc/opencloud
+      - /mnt/cloud:/var/lib/opencloud
+    ports:
+      - "9200:9200"
+
+  couchdb:
+    image: couchdb:latest
+    container_name: couchdb
+    restart: unless-stopped
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - ./config/couchdb/data:/opt/couchdb/data
+      - ./config/couchdb/local.d:/opt/couchdb/etc/local.d
+    ports:
+      - "5984:5984"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-apps
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
+  dockhand:
+    image: fnsys/dockhand:latest
+    container_name: dockhand
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockhand_data:/app/data
+
+volumes:
+  dockhand_data:
+

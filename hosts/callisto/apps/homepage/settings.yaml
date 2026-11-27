@@ -1,0 +1,74 @@
+# Global look, layout and tabs
+title: Home Lab
+description: jupiter and its moons
+favicon: https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/png/homepage.png
+theme: dark
+color: slate
+headerStyle: boxed
+statusStyle: dot
+iconStyle: theme
+useEqualHeights: true
+fullWidth: true
+hideVersion: false
+target: _blank
+showStats: true
+disableCollapse: true
+disableIndexing: true
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  showSearchSuggestions: true
+  provider: duckduckgo
+
+# Group order sets tab order and card layout
+layout:
+  Home Assistant:
+    tab: Home
+    icon: home-assistant.png
+    style: row
+    columns: 4
+  Infrastructure:
+    tab: Home
+    icon: proxmox.png
+    style: row
+    columns: 4
+  Network:
+    tab: Home
+    icon: unifi.png
+    style: row
+    columns: 4
+  Admin:
+    tab: Home
+    icon: mdi-bookmark-multiple
+    style: row
+    columns: 4
+  Media:
+    tab: Media
+    icon: plex.png
+    style: row
+    columns: 3
+  Downloads:
+    tab: Media
+    icon: sabnzbd.png
+    style: row
+    columns: 3
+  Media Links:
+    tab: Media
+    icon: mdi-link-variant
+    style: row
+    columns: 3
+  Apps:
+    tab: Apps
+    icon: immich.png
+    style: row
+    columns: 4
+  Games:
+    tab: Games
+    icon: mdi-gamepad-variant
+    style: row
+    columns: 3
+  Game Links:
+    tab: Games
+    icon: mdi-link-variant
+    style: row
+    columns: 3

@@ -1,0 +1,29 @@
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - ./data:/app/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-vps
+    restart: unless-stopped
+    network_mode: host
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
+  hawser:
+    image: ghcr.io/finsys/hawser:latest
+    container_name: hawser
+    restart: unless-stopped
+    environment:
+      - TOKEN=${HAWSER_TOKEN}
+    ports:
+      - "2376:2376"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

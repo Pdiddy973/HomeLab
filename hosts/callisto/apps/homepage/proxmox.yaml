@@ -1,0 +1,11 @@
+# Proxmox node used by proxmoxVMID entries in services.yaml
+jupiter:
+  url: https://10.0.30.5:8006
+  token: CHANGE_ME
+  secret: CHANGE_ME
+
+# saturn: network-rack host for Home Assistant, iVentoy and other 24/7 guests. Uncomment once it exists.
+# saturn:
+#   url: https://<saturn address>:8006
+#   token: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_ID}}"
+#   secret: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_SECRET}}"

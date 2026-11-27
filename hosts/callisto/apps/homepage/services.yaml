@@ -1,0 +1,343 @@
+# Homepage services for the Home Lab, served from callisto (10.0.30.21:3000).
+# Secrets come from HOMEPAGE_VAR_* in homepage.env.
+# A bookmark page with a few stats: only Home Assistant, the server rack UPS, Proxmox, TrueNAS and Plex show widgets.
+
+# Home Assistant: the monitoring hub
+- Home Assistant:
+    - Home Assistant:
+        icon: home-assistant.png
+        href: https://homeassistant.remoteproxy.tech
+        description: phobos · VM 130 · monitoring and alerts hub
+        siteMonitor: http://10.0.30.30
+        # Moves to saturn: change proxmoxNode when VM 130 migrates
+        proxmoxNode: jupiter
+        proxmoxVMID: 130
+        showStats: true
+        widget:
+          type: homeassistant
+          url: http://10.0.30.30
+          key: "{{HOMEPAGE_VAR_HA_TOKEN}}"
+          custom:
+            - state: zone.home
+              label: people home
+            - state: sensor.system_homepage_lights_on
+              label: lights on
+            - state: sensor.system_homepage_updates_pending
+              label: updates
+            - state: sensor.services_homepage_monitors_down
+              label: monitors down
+
+    - Server Rack UPS:
+        icon: nut.png
+        href: https://homeassistant.remoteproxy.tech
+        description: CyberPower CP1500 · NUT on jupiter, via HA
+        widget:
+          type: homeassistant
+          url: http://10.0.30.30
+          key: "{{HOMEPAGE_VAR_HA_TOKEN}}"
+          custom:
+            - state: sensor.servers_rack_ups_status
+              label: status
+              value: "{state}"
+            - state: sensor.servers_rack_ups_battery_charge
+              label: battery
+            - state: sensor.servers_rack_ups_battery_runtime_minutes
+              label: runtime
+            - state: sensor.servers_rack_ups_load
+              label: load
+
+    - Storage and Backups:
+        icon: truenas-scale.png
+        href: https://homeassistant.remoteproxy.tech
+        description: Pool health and last Proxmox backup, via HA
+        widget:
+          type: homeassistant
+          url: http://10.0.30.30
+          key: "{{HOMEPAGE_VAR_HA_TOKEN}}"
+          custom:
+            - template: "{{ 'healthy' if is_state('binary_sensor.servers_truenas_pools_hdd_pool_healthy','on') and is_state('binary_sensor.servers_truenas_pools_ssd_pool_healthy','on') and is_state('binary_sensor.servers_truenas_pools_boot_pool_healthy','on') and is_state('binary_sensor.servers_truenas_disk_pool_issues','off') else 'CHECK' }}"
+              label: pools
+            - state: sensor.servers_truenas_pools_hdd_pool_usage
+              label: hdd used
+            - template: "{{ relative_time(states('sensor.servers_jupiter_last_backup') | as_datetime) }} ago"
+              label: last backup
+            - template: "{{ 'failed' if is_state('binary_sensor.servers_jupiter_backup_status','on') else 'ok' }}"
+              label: backup
+
+# Proxmox host, NAS, and the network
+- Infrastructure:
+    - Proxmox:
+        icon: proxmox.png
+        href: https://10.0.1.10:8006
+        description: jupiter · reached from callisto at 10.0.30.5
+        siteMonitor: https://10.0.30.5:8006
+        widget:
+          type: proxmox
+          url: https://10.0.30.5:8006
+          username: "{{HOMEPAGE_VAR_PROXMOX_TOKEN_ID}}"
+          password: CHANGE_ME
+          node: jupiter
+
+    - TrueNAS:
+        icon: truenas-scale.png
+        href: https://10.0.1.11
+        description: ganymede · VM 100
+        siteMonitor: https://10.0.1.11
+        widget:
+          type: truenas
+          url: https://10.0.1.11
+          key: "{{HOMEPAGE_VAR_TRUENAS_KEY}}"
+          version: 2
+          enablePools: true
+
+    - Jupiter BMC:
+        icon: asrock-rack.png
+        href: https://10.0.1.9
+        description: jupiter-bmc · remote console (Trusted only)
+
+    - Dockhand:
+        icon: dockhand.png
+        href: http://10.0.30.21:3100
+        description: Containers on callisto, europa and juno
+        server: callisto
+        container: dockhand
+        showStats: true
+
+- Network:
+    - UniFi:
+        icon: unifi.png
+        href: https://10.0.1.1
+        description: UDM Pro · gateway for every VLAN
+
+    - Cloudflare Tunnels:
+        icon: cloudflare-zero-trust.png
+        href: https://one.dash.cloudflare.com
+        description: arr, apps-vm, vps and carme tunnels
+
+    - Caddy:
+        icon: caddy.png
+        href: https://immich.remoteproxy.tech
+        description: Local HTTPS for Immich, Mealie, Home Assistant
+        server: callisto
+        container: caddy
+        showStats: true
+        siteMonitor: https://homeassistant.remoteproxy.tech
+
+    - VPN (wg-easy):
+        icon: wireguard.png
+        href: http://10.0.1.20:51821
+        description: elara · VM 160 · vpn.remoteproxy.tech:51820
+        # Moves to saturn: change proxmoxNode when VM 160 migrates
+        proxmoxNode: jupiter
+        proxmoxVMID: 160
+        showStats: true
+        proxmoxType: qemu
+
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://status.remoteproxy.tech
+        description: juno · external checks and push heartbeats
+        siteMonitor: https://status.remoteproxy.tech/api/status-page/homelab
+
+    - Juno Relay:
+        icon: digital-ocean.png
+        href: https://cloud.digitalocean.com/droplets
+        description: DigitalOcean droplet · game relay and Kuma
+
+    - Network Boot:
+        icon: sh-iventoy.png
+        href: http://10.0.1.15:26000
+        description: tethys · CT 202 · iVentoy (optional)
+        # Moves to saturn: change proxmoxNode when CT 202 migrates
+        proxmoxNode: jupiter
+        proxmoxVMID: 202
+        showStats: true
+        proxmoxType: lxc
+
+# Plex and the Arr stack on europa
+- Media:
+    - Plex:
+        icon: plex.png
+        href: http://10.0.30.10:32400/web
+        description: io · CT 110
+        siteMonitor: http://10.0.30.10:32400/identity
+        proxmoxNode: jupiter
+        proxmoxVMID: 110
+        showStats: true
+        proxmoxType: lxc
+        widget:
+          type: plex
+          url: http://10.0.30.10:32400
+          key: "{{HOMEPAGE_VAR_PLEX_TOKEN}}"
+          fields: ["streams", "movies", "tv"]
+
+    - Tracearr:
+        icon: tracearr.png
+        href: http://10.0.30.20:3000
+        description: Plex stream history and sharing checks
+        server: europa
+        container: tracearr
+        showStats: true
+
+    - Seerr:
+        icon: seerr.png
+        href: https://overseerr.remoteproxy.tech
+        description: Requests
+        server: europa
+        container: seerr
+        showStats: true
+
+    - Wizarr:
+        icon: wizarr.png
+        href: https://wizard.remoteproxy.tech
+        description: Plex invitations
+        server: europa
+        container: wizarr
+        showStats: true
+        siteMonitor: http://10.0.30.20:5690
+
+    - Maintainerr:
+        icon: maintainerr.png
+        href: http://10.0.30.20:6246
+        description: Library cleanup rules
+        server: europa
+        container: maintainerr
+        showStats: true
+
+- Downloads:
+    - Sonarr:
+        icon: sonarr.png
+        href: http://10.0.30.20:8989
+        description: TV
+        server: europa
+        container: sonarr
+        showStats: true
+
+    - Radarr:
+        icon: radarr.png
+        href: http://10.0.30.20:7878
+        description: Movies
+        server: europa
+        container: radarr
+        showStats: true
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://10.0.30.20:9696
+        description: Indexers
+        server: europa
+        container: prowlarr
+        showStats: true
+
+    - SABnzbd:
+        icon: sabnzbd.png
+        href: http://10.0.30.20:8080
+        description: Usenet downloads
+        server: europa
+        container: sabnzbd
+        showStats: true
+
+# Family apps on callisto
+- Apps:
+    - Immich:
+        icon: immich.png
+        href: https://immich.remoteproxy.tech
+        description: Photos
+        server: callisto
+        container: immich_server
+        showStats: true
+
+    - Mealie:
+        icon: mealie.png
+        href: https://mealie.remoteproxy.tech
+        description: Recipes and meal plans
+        server: callisto
+        container: mealie
+        showStats: true
+
+    - OpenCloud:
+        icon: sh-opencloud.png
+        href: https://cloud.remoteproxy.tech
+        description: File sync and sharing
+        server: callisto
+        container: opencloud
+        showStats: true
+        siteMonitor: http://10.0.30.21:9200
+
+    - Obsidian Sync:
+        icon: obsidian.png
+        href: https://obsidian.remoteproxy.tech/_utils
+        description: CouchDB for the three LiveSync vaults
+        server: callisto
+        container: couchdb
+        showStats: true
+        siteMonitor: http://10.0.30.21:5984/_up
+
+    - TangleBot:
+        icon: discord.png
+        href: https://github.com/Tangle-Crew/TangleBot
+        description: Tangle Crew Discord bot · leda · VM 122
+
+# Game servers on the Games VLAN (CTs 140 to 144)
+- Games:
+    - Game Gateway:
+        icon: mdi-router-network
+        description: himalia · CT 140 · WireGuard to juno
+        proxmoxNode: jupiter
+        proxmoxVMID: 140
+        showStats: true
+        proxmoxType: lxc
+
+    - Dragonwilds:
+        icon: mdi-sword-cross
+        description: thebe · CT 141 · UDP 7777
+        proxmoxNode: jupiter
+        proxmoxVMID: 141
+        showStats: true
+        proxmoxType: lxc
+
+    - Valheim:
+        icon: valheim.png
+        description: metis · CT 142 · UDP 2456-2457
+        proxmoxNode: jupiter
+        proxmoxVMID: 142
+        showStats: true
+        proxmoxType: lxc
+
+    - Minecraft:
+        icon: minecraft.png
+        href: https://10.0.40.12:8443
+        description: adrastea · CT 143 · Crafty panel
+        proxmoxNode: jupiter
+        proxmoxVMID: 143
+        showStats: true
+        proxmoxType: lxc
+
+    - Foundry VTT:
+        icon: foundry-vtt.png
+        href: https://foundry.tanglecrew.group
+        description: carme · CT 144 · TCP 30000
+        siteMonitor: https://foundry.tanglecrew.group
+        proxmoxNode: jupiter
+        proxmoxVMID: 144
+        showStats: true
+        proxmoxType: lxc
+
+# Parked: Raspberry Pi UPS monitors (7.3). Uncomment once they exist and the Glances firewall rule allows callisto.
+# - Rack Monitors:
+#     - sinope:
+#         icon: glances.png
+#         description: Network rack UPS (netups)
+#         widget:
+#           type: glances
+#           url: http://10.0.1.16:61208
+#           version: 4
+#           metric: info
+#     - pasiphae:
+#         icon: glances.png
+#         description: Desk UPS (deskups)
+#         widget:
+#           type: glances
+#           url: http://10.0.1.17:61208
+#           version: 4
+#           metric: info

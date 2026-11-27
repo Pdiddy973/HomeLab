@@ -1,0 +1,25 @@
+# Header widgets across the top of every tab
+- greeting:
+    text_size: xl
+    text: Home Lab
+
+- datetime:
+    text_size: l
+    format:
+      dateStyle: long
+      timeStyle: short
+      hour12: true
+
+- openmeteo:
+    label: Home
+    latitude: "{{HOMEPAGE_VAR_LATITUDE}}"
+    longitude: "{{HOMEPAGE_VAR_LONGITUDE}}"
+    timezone: America/New_York
+    units: imperial
+    cache: 5
+
+- search:
+    provider: duckduckgo
+    focus: false
+    showSearchSuggestions: true
+    target: _blank

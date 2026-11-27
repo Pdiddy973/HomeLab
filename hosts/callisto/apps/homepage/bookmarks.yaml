@@ -1,0 +1,49 @@
+# Links that have no status of their own
+- Admin:
+    - Build plan:
+        - icon: mdi-notebook-outline
+          href: https://claude.ai/artifact/8cCV2R8cpzuWVsXcma5sJp
+          description: Single source of truth
+    - Kuma status page:
+        - icon: uptime-kuma.png
+          href: https://status.remoteproxy.tech/status/homelab
+    - Cloudflare:
+        - icon: cloudflare.png
+          href: https://dash.cloudflare.com
+    - Zero Trust:
+        - icon: cloudflare-zero-trust.png
+          href: https://one.dash.cloudflare.com
+    - DigitalOcean:
+        - icon: digital-ocean.png
+          href: https://cloud.digitalocean.com
+    - Backblaze B2:
+        - icon: si-backblaze
+          href: https://secure.backblaze.com/b2_buckets.htm
+    - UniFi Site Manager:
+        - icon: ubiquiti-unifi.png
+          href: https://unifi.ui.com
+    - GitHub:
+        - icon: si-github
+          href: https://github.com/Pdiddy973
+
+- Media Links:
+    - Plex (app.plex.tv):
+        - icon: plex.png
+          href: https://app.plex.tv
+    - Notifiarr:
+        - icon: notifiarr.png
+          href: https://notifiarr.com
+    - TRaSH Guides:
+        - icon: mdi-book-open-variant
+          href: https://trash-guides.info
+
+- Game Links:
+    - Foundry setup:
+        - icon: foundry-vtt.png
+          href: https://foundry.tanglecrew.group/setup
+    - Crafty panel:
+        - icon: crafty-controller.png
+          href: https://10.0.40.12:8443
+    - TangleBot repo:
+        - icon: si-github
+          href: https://github.com/Tangle-Crew/TangleBot

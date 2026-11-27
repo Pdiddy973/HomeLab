@@ -1,0 +1,45 @@
+services:
+  tanglebot:
+    build:
+      context: ./tanglebot/src/Tanglebot
+    image: tanglebot:local
+    container_name: tanglebot
+    restart: unless-stopped
+    env_file:
+      - ./tanglebot/src/Tanglebot/.env
+    volumes:
+      - ./tanglebot/data:/app/data
+    depends_on:
+      - tanglebot-db
+  tanglebot-db:
+    image: postgres:17-alpine
+    container_name: tanglebot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tanglebot
+      POSTGRES_PASSWORD: ${TANGLEBOT_DB_PASSWORD}
+      POSTGRES_DB: tanglebot
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    ports:
+      # Only so Home Assistant can read it (Phase 7)
+      - "10.0.30.50:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tanglebot -d tanglebot"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    ports:
+      - "10.0.30.50:5050:80"
+    depends_on:
+      - tanglebot-db

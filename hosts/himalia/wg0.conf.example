@@ -1,0 +1,12 @@
+[Interface]
+Address = 10.99.0.2/24
+PrivateKey = CHANGE_ME
+PostUp = /usr/local/bin/gateway.sh up
+PostDown = /usr/local/bin/gateway.sh down
+
+[Peer]
+# juno, the relay VPS
+PublicKey = 8UZwiWVZBLd3xMS7IoYBIoaRfVXsCSDmiIPPkBkHgng=
+Endpoint = juno.tanglecrew.group:51820
+AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25

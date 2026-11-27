@@ -1,0 +1,161 @@
+x-common: &common
+  restart: unless-stopped
+  environment:
+    - PUID=${PUID}
+    - PGID=${PGID}
+    - TZ=${TZ}
+
+services:
+  sabnzbd:
+    <<: *common
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    volumes:
+      - ./config/sabnzbd:/config
+      - /mnt/truemedia:/data
+    ports:
+      - "8080:8080"
+
+  prowlarr:
+    <<: *common
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    volumes:
+      - ./config/prowlarr:/config
+    ports:
+      - "9696:9696"
+
+  sonarr:
+    <<: *common
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    volumes:
+      - ./config/sonarr:/config
+      - /mnt/truemedia:/data
+    ports:
+      - "8989:8989"
+
+  radarr:
+    <<: *common
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    volumes:
+      - ./config/radarr:/config
+      - /mnt/truemedia:/data
+    ports:
+      - "7878:7878"
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    init: true
+    user: "${PUID}:${PGID}"
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - LOG_LEVEL=info
+    volumes:
+      - ./config/seerr:/app/config
+    ports:
+      - "5055:5055"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    security_opt:
+      - no-new-privileges
+    cap_drop:
+      - ALL
+
+  wizarr:
+    <<: *common
+    image: ghcr.io/wizarrrr/wizarr:latest
+    container_name: wizarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - DISABLE_BUILTIN_AUTH=false
+    volumes:
+      - ./config/wizarr:/data
+    ports:
+      - "5690:5690"
+    
+  kometa:
+    <<: *common
+    image: lscr.io/linuxserver/kometa:latest
+    container_name: kometa
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - KOMETA_CONFIG=/config/config.yml
+      - KOMETA_TIMES=03:00
+      - KOMETA_RUN=false
+    volumes:
+      - ./config/kometa:/config
+
+
+  maintainerr:
+    image: ghcr.io/maintainerr/maintainerr:latest
+    container_name: maintainerr
+    restart: unless-stopped
+    user: "${PUID}:${PGID}"
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ./config/maintainerr:/opt/data
+      - /mnt/truemedia:/data/media
+    ports:
+      - "6246:6246"
+
+  notifiarr:
+    image: golift/notifiarr:latest
+    container_name: notifiarr
+    hostname: notifiarr
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - DN_API_KEY=${NOTIFIARR_API_KEY}
+    volumes:
+      - ./config/notifiarr:/config
+      - /var/run/utmp:/var/run/utmp
+      - /etc/machine-id:/etc/machine-id
+    ports:
+      - "5454:5454"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-arr
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
+  hawser:
+    image: ghcr.io/finsys/hawser:latest
+    container_name: hawser
+    restart: unless-stopped
+    environment:
+      - TOKEN=${HAWSER_TOKEN}
+    ports:
+      - "2376:2376"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: dockerproxy
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+      - POST=0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "10.0.30.20:2375:2375"
+
+volumes:
+  dockhand_data:

@@ -1,0 +1,16 @@
+[Interface]
+Address = 10.99.0.1/24
+ListenPort = 51820
+PrivateKey = CHANGE_ME
+PostUp = /usr/local/bin/relay.sh up
+PostDown = /usr/local/bin/relay.sh down
+
+[Peer]
+# himalia, the game gateway at home
+PublicKey = d5F4tmuuPhN7/w+XTKeMWwFfgPtnDkNsBId/l27mpUY=
+AllowedIPs = 10.99.0.2/32, 10.0.40.0/24
+
+[Peer]
+# callisto, so Dockhand can reach Hawser
+PublicKey = pmGpLEU8kgbXrr/bKCjL1fQJRkSKPhzXDnG3WEfbUHo=
+AllowedIPs = 10.99.0.3/32

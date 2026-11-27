@@ -1,0 +1,146 @@
+(cloudflare) {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+}
+
+immich.remoteproxy.tech {
+	import cloudflare
+	reverse_proxy 10.0.30.21:2283
+}
+
+mealie.remoteproxy.tech {
+	import cloudflare
+	reverse_proxy 10.0.30.21:9000
+}
+
+homeassistant.remoteproxy.tech {
+	import cloudflare
+	reverse_proxy 10.0.30.30:80
+}
+*.home.remoteproxy.tech {
+	import cloudflare
+
+    # Turns away anything not from Management, Trusted, Household or Home Assistant
+    @outside not remote_ip 10.0.1.0/24 10.0.10.0/24 10.0.20.0/24 10.0.30.30/32
+    handle @outside {
+        abort
+    }
+
+    # Admin pages: on Household, only Paul's phone
+    @adminonly {
+        host jupiter.home.remoteproxy.tech saturn.home.remoteproxy.tech truenas.home.remoteproxy.tech dockhand.home.remoteproxy.tech crafty.home.remoteproxy.tech pgadmin.home.remoteproxy.tech
+        remote_ip 10.0.20.0/24
+        not remote_ip 10.0.20.209/32
+    }
+    handle @adminonly {
+        abort
+    }
+
+	@health host health.home.remoteproxy.tech
+	handle @health {
+		respond "ok" 200
+	}
+
+	@sonarr host sonarr.home.remoteproxy.tech
+	handle @sonarr {
+		reverse_proxy 10.0.30.20:8989
+	}
+
+	@radarr host radarr.home.remoteproxy.tech
+	handle @radarr {
+		reverse_proxy 10.0.30.20:7878
+	}
+
+	@prowlarr host prowlarr.home.remoteproxy.tech
+	handle @prowlarr {
+		reverse_proxy 10.0.30.20:9696
+	}
+
+	@bazarr host bazarr.home.remoteproxy.tech
+	handle @bazarr {
+		reverse_proxy 10.0.30.20:6767
+	}
+
+	@sabnzbd host sabnzbd.home.remoteproxy.tech
+	handle @sabnzbd {
+		reverse_proxy 10.0.30.20:8080
+	}
+
+	@maintainerr host maintainerr.home.remoteproxy.tech
+	handle @maintainerr {
+		reverse_proxy 10.0.30.20:6246
+	}
+
+	@notifiarr host notifiarr.home.remoteproxy.tech
+	handle @notifiarr {
+		reverse_proxy 10.0.30.20:5454
+	}
+
+	@tracearr host tracearr.home.remoteproxy.tech
+	handle @tracearr {
+		reverse_proxy 10.0.30.20:3000
+	}
+
+	@homepage host homepage.home.remoteproxy.tech
+	handle @homepage {
+		reverse_proxy 10.0.30.21:3000
+	}
+
+	@dockhand host dockhand.home.remoteproxy.tech
+	handle @dockhand {
+		reverse_proxy 10.0.30.21:3100
+	}
+
+	@unmanic host unmanic.home.remoteproxy.tech
+	handle @unmanic {
+		reverse_proxy 10.0.30.12:8888
+	}
+
+	@pgadmin host pgadmin.home.remoteproxy.tech
+	handle @pgadmin {
+		reverse_proxy 10.0.30.50:5050
+	}
+
+	# Proxmox, TrueNAS and Crafty use their own self-signed certificates
+	@jupiter host jupiter.home.remoteproxy.tech
+	handle @jupiter {
+		reverse_proxy https://10.0.30.5:8006 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	@saturn host saturn.home.remoteproxy.tech
+	handle @saturn {
+		reverse_proxy https://10.0.30.6:8006 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	@truenas host truenas.home.remoteproxy.tech
+	handle @truenas {
+		reverse_proxy https://10.0.1.11 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	@crafty host crafty.home.remoteproxy.tech
+	handle @crafty {
+		reverse_proxy https://10.0.40.12:8443 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+		}
+	}
+
+	# Any other name under home.remoteproxy.tech
+	handle {
+		abort
+	}
+}

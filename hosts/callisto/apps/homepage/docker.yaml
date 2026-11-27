@@ -1,0 +1,8 @@
+# callisto: local socket, mounted read-only into the Homepage container
+callisto:
+  socket: /var/run/docker.sock
+
+# europa: read-only docker-socket-proxy on port 2375
+europa:
+  host: 10.0.30.20
+  port: 2375
