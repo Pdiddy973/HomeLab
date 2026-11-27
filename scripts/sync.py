@@ -24,7 +24,7 @@ SCANS = [
     ('token (JWT style)', re.compile(r'eyJ[A-Za-z0-9_-]{20,}')),
     ('base64 key (WireGuard style)', re.compile(r'(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{43}=(?![A-Za-z0-9+/=])')),
     ('private key block', re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----')),
-    ('hard-coded secret', re.compile(r'(?i)(?:password|passwd|secret|token|api[_-]?key)["\']?\s*[:=]\s*["\']?(?!CHANGE_ME|<|\$\{|\$\()[^\s"\'#]{8,}')),
+    ('hard-coded secret', re.compile(r'(?i)(?:password|passwd|secret|token|api[_-]?key)["\']?\s*[:=]\s*["\']?(?!CHANGE_ME|<|\$\{|\$\(|\{\{)[^\s"\'#]{8,}')),
 ]
 
 def fetch_host(host, paths):
@@ -64,8 +64,12 @@ def scan(files):
         for n, line in enumerate(text.splitlines(), 1):
             if 'sync-ok' in line:
                 continue
+            # ${VAR} and ${VAR:-default} come from the .env file; WireGuard public keys are not secret
+            checked = re.sub(r'\$\{[^}]*\}', '', line)
             for name, rx in SCANS:
-                if rx.search(line):
+                if name.startswith('base64') and re.match(r'\s*PublicKey\s*=', line):
+                    continue
+                if rx.search(checked):
                     found.append(f'{rel}:{n}: {name}: {line.strip()[:60]}...')
     return found
 
