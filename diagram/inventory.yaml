@@ -1,0 +1,266 @@
+# Inventory for the homelab diagram: everything the picture shows comes from this file.
+# build.py reads it; the positions of the boxes are hand-placed in build.py.
+# Sources: the Obsidian vault notes Hardware inventory, Network layout, Cable runs,
+# IP address list, Guest IDs and sizes. Update this file when those notes change.
+
+meta:
+  title: "Home Lab"
+  subtitle: "jupiter and its moons · saturn planned"
+  date: "November 2026"
+  domain: "remoteproxy.tech"
+
+redact:
+  domain: false                     # true replaces the domain with domain_placeholder
+  domain_placeholder: "example.com"
+
+vlans:   # order = table order
+  - {key: "1",   tag: "VLAN 1",  name: Management, subnet: "10.0.1.0/24",  color: "#e3b341", note: "UDM, switches, APs, Proxmox, TrueNAS, BMCs, VPN"}
+  - {key: "10",  tag: "VLAN 10", name: Trusted,    subnet: "10.0.10.0/24", color: "#58a6ff", note: "Paul's desktop, laptop and phone"}
+  - {key: "20",  tag: "VLAN 20", name: Household,  subnet: "10.0.20.0/24", color: "#db61a2", note: "family devices, TVs"}
+  - {key: "30",  tag: "VLAN 30", name: Servers,    subnet: "10.0.30.0/24", color: "#f0883e", note: "Plex, Arr, apps, Home Assistant, TangleBot"}
+  - {key: "40",  tag: "VLAN 40", name: Games,      subnet: "10.0.40.0/24", color: "#a371f7", note: "game servers, routed out through juno"}
+  - {key: "50",  tag: "VLAN 50", name: IoT,        subnet: "10.0.50.0/24", color: "#3fb950", note: "smart devices, ESPHome, Zigbee"}
+  - {key: "60",  tag: "VLAN 60", name: Guest,      subnet: "10.0.60.0/24", color: "#8b949e", note: "visitors, internet only"}
+  - {key: "70",  tag: "VLAN 70", name: Cameras,    subnet: "10.0.70.0/24", color: "#d29922", note: "UniFi cameras, adopted by Protect"}
+  - {key: "vpn", tag: "WireGuard", name: VPN,      subnet: "10.8.0.0/24",  color: "#39c5cf", note: "personal VPN on elara, phone and laptop"}
+  - {key: "gt",  tag: "WireGuard", name: Game tunnel, subnet: "10.99.0.0/24", color: "#bc8cff", note: "juno .1 · himalia .2 · callisto .3"}
+  - {key: "wan", tag: "SFP+ WAN", name: Frontier, subnet: "192.168.11.0/24", color: "#f85149", note: "PON stick .1 · UDM .2 · fiber to Frontier"}
+
+cloud_services:
+  - {icon: cloudflare,   name: "Cloudflare", note: "DNS · Tunnels for web apps · Access"}
+  - {icon: digital-ocean, name: "juno · DigitalOcean", note: "relay VPS for game ports · Uptime Kuma"}
+  - {icon: discord,      name: "Discord", note: "alerts from phoebe and the host scripts"}
+
+remote:
+  name: "Personal VPN"
+  note: "phone + laptop · wg-easy on elara"
+
+# how traffic from the internet reaches the lab: one row per path
+ingress:
+  - name: "Game servers"
+    steps:
+      - {icon: glyph-game,    name: "Players"}
+      - {icon: digital-ocean, name: "juno", sub: "public IP"}
+      - {icon: wireguard,     name: "himalia", sub: "10.99.0.2"}
+      - {icon: glyph-game,    name: "game servers", sub: "VLAN 40"}
+    note: "game ports never open at home; the tunnel is the only way out for VLAN 40"
+  - name: "Web apps"
+    steps:
+      - {icon: glyph-app,  name: "Browser"}
+      - {icon: cloudflare, name: "Cloudflare", sub: "Tunnel"}
+      - {icon: caddy,      name: "callisto", sub: "Caddy"}
+      - {icon: glyph-app,  name: "apps + HA", sub: "VLAN 30"}
+    note: "Seerr, Wizarr, Immich, Mealie, Home Assistant · no open ports"
+  - name: "Plex"
+    steps:
+      - {icon: plex, name: "Clients"}
+      - {icon: unifi, name: "UDM", sub: "TCP 32400"}
+      - {icon: plex, name: "io", sub: "10.0.30.10"}
+    note: "port forward on all WANs"
+  - name: "Personal VPN"
+    steps:
+      - {icon: wireguard, name: "Phone"}
+      - {icon: unifi,     name: "UDM", sub: "UDP 51820"}
+      - {icon: wireguard, name: "elara", sub: "10.0.1.20"}
+    note: "vpn.remoteproxy.tech kept current by DDNS"
+
+pon:
+  name: "8311 PON stick"
+  type: "ONT"
+  model: "Frontier fiber · in UDM SFP+ port 11"
+  fallback: "Frontier FRX523 on port 9 (fallback WAN)"
+
+udm:
+  name: "UDM Pro"
+  type: "router/firewall"
+  model: "UniFi Dream Machine Pro"
+  ip: "10.0.1.1"
+  internal: ".1 on every VLAN"
+  os: "UniFi OS · zone-based firewall"
+  hw:
+    - {icon: glyph-fiber, label: "WAN 1 · SFP+ 11", value: "8311 PON stick", sub: "Frontier fiber, primary"}
+    - {icon: glyph-nic,   label: "WAN 2 · PORT 9",  value: "Frontier FRX523", sub: "fallback, spare router"}
+    - {icon: glyph-fiber, label: "LAN · SFP+ 10",   value: "10G to core switch", sub: "all VLANs tagged"}
+  services:
+    - {icon: glyph-shield, name: "CyberSecure IPS", note: "block · Servers, Games, IoT, Guest"}
+    - {icon: glyph-dhcp,   name: "DHCP + DNS",      note: ".100-.254 · 1.1.1.1 upstream"}
+    - {icon: glyph-block,  name: "Zone firewall",   note: "47 policies, see Firewall rules"}
+    - {icon: unifi,        name: "UniFi Network",   note: "switches, APs, PPSK Wi-Fi"}
+    - {icon: glyph-antenna, name: "mDNS",           note: "casting across VLANs"}
+    - {icon: glyph-shield, name: "PON monitor",     note: "re-installed by HA after updates"}
+
+# Network rack core switch. Only the ports in use are drawn.
+switch:
+  name: "USW Pro Max 48 PoE"
+  type: "core switch"
+  model: "UniFi USW Pro Max 48 PoE"
+  ip: "Management VLAN"
+  rack: "network rack"
+  ports:
+    - {name: "1",  to: "Zigbee",  untagged: "50", planned: true}
+    - {name: "?",  to: "UNVR",    untagged: "1", unknown_port: true}
+    - {name: "?",  to: "saturn",  untagged: "1", tagged: ["30", "50"], planned: true, unknown_port: true}
+    - {name: "41", to: "Desk PC", untagged: "10"}
+    - {name: "42", to: "Desk sw"}
+    - {name: "43", to: "free"}
+    - {name: "44", to: "free"}
+    - {name: "45", to: "AP back", untagged: "1", tagged: ["10", "20", "50", "60"]}
+    - {name: "46", to: "free"}
+    - {name: "47", to: "AP front", untagged: "1", tagged: ["10", "20", "50", "60"]}
+    - {name: "48", to: "free"}
+    - {name: "49", to: "UDM",     sfp: true, untagged: "1", tagged: ["10", "20", "30", "40", "50", "60", "70"]}
+    - {name: "50", to: "jupiter", sfp: true, untagged: "1", tagged: ["10", "30", "40", "50"]}
+    - {name: "51", to: "LACP",    sfp: true, untagged: "1", tagged: ["10", "30", "40", "50"]}
+    - {name: "52", to: "LACP",    sfp: true, untagged: "1", tagged: ["10", "30", "40", "50"]}
+
+# Main rack switch in Elizabeth's office.
+switch2:
+  name: "USW Pro 24"
+  type: "main rack switch"
+  model: "UniFi USW Pro 24 · no PoE"
+  ip: "Management VLAN"
+  ports:
+    - {name: "25", to: "LACP", sfp: true, untagged: "1", tagged: ["10", "30", "40", "50"]}
+    - {name: "26", to: "LACP", sfp: true, untagged: "1", tagged: ["10", "30", "40", "50"]}
+    - {name: "23", to: "BMC",  untagged: "1"}
+    - {name: "24", to: "jupiter", untagged: "1", tagged: ["10", "30", "40", "50"]}
+
+devices:
+  zigbee: {name: "Zigbee", type: "coordinator", model: "PoE Zigbee coordinator", icons: [zigbee2mqtt], vlan: "50", ip: "10.0.50.20", os: "run 13 · planned", planned: true}
+  unvr:   {name: "UNVR", type: "NVR", model: "UniFi NVR · Protect", icons: [unifi], vlan: "1", ip: "10.0.1.13", os: "cameras on VLAN 70"}
+  desk:   {name: "Paul's desk", type: "wall plate", model: "Desktop PC + desk switch", icons: [glyph-nic], vlan: "10", ip: "Trusted VLAN", os: "runs 9-12 · wall ports 1-4"}
+  ap:     {name: "Access points", type: "UniFi APs", model: "Back AP (run 5) · Front AP (run 7)", icons: [unifi], vlan: "1", trunk: true, ip: "Management VLAN", os: "PoE from the core switch"}
+
+ssid:
+  name: "One SSID"
+  note: "PPSK: the password picks the VLAN"
+  vlans: ["10", "20", "50", "60"]
+
+jupiter:
+  name: "jupiter"
+  type: "Proxmox host"
+  model: "ASRock Rack ROMED8-2T · HakoForge chassis"
+  ip: "10.0.1.10 · 10.0.30.5"
+  os: "Proxmox VE 9.3 · main rack, Elizabeth's office"
+  hw:
+    - {icon: glyph-cpu,   label: "CPU",     value: "AMD EPYC",               sub: "ROMED8-2T"}
+    - {icon: glyph-ram,   label: "MEMORY",  value: "128 GB ECC RDIMM",       sub: "8 channels · ganymede gets 32 GB"}
+    - {icon: glyph-ssd,   label: "BOOT",    value: "2× Optane 32 GB",        sub: "ZFS mirror · Proxmox"}
+    - {icon: glyph-ssd,   label: "APPSTORAGE", value: "2× Optane 900P 280 GB", sub: "ZFS mirror · guest disks"}
+    - {icon: glyph-gpu,   label: "GPU",     value: "Intel Arc A380",         sub: "Plex · Frigate · Unmanic"}
+    - {icon: glyph-hdd,   label: "HBA",     value: "LSI 9300-8i",            sub: "passthrough → ganymede"}
+    - {icon: glyph-fiber, label: "NETWORK", value: "Dell CX4121C SFP28",     sub: "bond0 primary · fiber run 3"}
+    - {icon: glyph-nic,   label: "NETWORK", value: "BCM57416 10G RJ45",      sub: "bond0 backup · USW Pro 24 p24"}
+    - {icon: glyph-nic,   label: "BMC",     value: "ASRock Rack IPMI",       sub: "10.0.1.9 · USW Pro 24 p23"}
+    - {icon: glyph-ups,   label: "UPS",     value: "CyberPower 1500 VA",     sub: "NUT on jupiter · tested 11-26"}
+
+  truenas:
+    name: "ganymede"
+    role: "TrueNAS"
+    icon: truenas-scale
+    id: "VM 100"
+    vlan: "1"
+    ip: "10.0.1.11 · .30.11 · .10.11"
+    note: "4 vCPU · 32 GB · HBA + SATA passthrough"
+    pools:
+      - {name: "HDD_pool", holds: "TrueMedia (media + usenet) · immich · cloud · Backups"}
+      - {name: "SSD_POOL", holds: "personal datasets · HakoFoundry config"}
+    shares: "NFS → jupiter, europa, callisto · SMB on Trusted only"
+
+  # guests on Management or with several networks, drawn as cards beside TrueNAS
+  cards:
+    - {name: "phobos", role: "Home Assistant", icon: home-assistant, id: "VM 130", vlan: "30", ip: "10.0.30.30 · 10.0.50.10", note: "Servers + IoT · moves to saturn as titan"}
+    - {name: "elara",  role: "Personal VPN", icon: wireguard, id: "VM 160", vlan: "1", ip: "10.0.1.20", note: "wg-easy · UDP 51820 · moves to saturn as mimas"}
+    - {name: "tethys", role: "Network boot", icon: glyph-app, id: "CT 202", vlan: "1", ip: "10.0.1.15", note: "iVentoy · moves to saturn"}
+
+  zones:
+    - vlan: "30"
+      note: "Docker VMs link to callisto's Dockhand through Hawser"
+      columns:
+        - - name: "Media"
+            guests:
+              - {name: "io", note: "Plex", icons: [plex], id: 110, ip: ".10"}
+              - {name: "amalthea", note: "Unmanic audio clean-up", icons: [glyph-app], id: 111, ip: ".12"}
+              - {name: "ananke", note: "Frigate · 7 days of footage", icons: [frigate], id: 112, ip: ".13", planned: true}
+              - name: "europa"
+                note: "Arr stack · Docker"
+                kind: VM
+                id: 120
+                ip: ".20"
+                docker: true
+                apps:
+                  - {icon: sonarr, name: "Sonarr"}
+                  - {icon: radarr, name: "Radarr"}
+                  - {icon: bazarr, name: "Bazarr"}
+                  - {icon: seerr, name: "Seerr", note: "via Tunnel"}
+                  - {icon: wizarr, name: "Wizarr", note: "via Tunnel"}
+                  - {icon: maintainerr, name: "Maintainerr"}
+                  - {icon: tracearr, name: "Tracearr"}
+        - - name: "Apps"
+            guests:
+              - name: "callisto"
+                note: "Apps · Docker"
+                kind: VM
+                id: 121
+                ip: ".21"
+                docker: true
+                apps:
+                  - {icon: immich, name: "Immich", note: "via Tunnel"}
+                  - {icon: mealie, name: "Mealie", note: "via Tunnel"}
+                  - {icon: glyph-app, name: "Homepage"}
+                  - {icon: glyph-app, name: "OpenCloud"}
+                  - {icon: couchdb, name: "CouchDB", note: "Obsidian sync"}
+                  - {icon: dockhand-svg, name: "Dockhand", note: "manages every Docker VM"}
+                  - {icon: caddy, name: "Caddy", note: "local HTTPS names"}
+                  - {icon: cloudflare, name: "Tunnel", note: "apps-vm"}
+              - {name: "phoebe", note: "Notify hub → Discord", icons: [discord], id: 132, ip: ".32"}
+        - - name: "Tangle Crew"
+            guests:
+              - name: "leda"
+                note: "Tangle Crew · Docker"
+                kind: VM
+                id: 122
+                ip: ".50"
+                docker: true
+                apps:
+                  - {icon: discord, name: "TangleBot"}
+                  - {icon: postgres, name: "Postgres"}
+                  - {icon: pgadmin, name: "pgAdmin"}
+          - name: "Infrastructure"
+            guests:
+              - {name: "rhea", note: "OpenBao secrets", icons: [openbao], kind: VM, id: 150, ip: ".40"}
+              - {name: "iapetus", note: "Semaphore runbooks", icons: [semaphore], kind: VM, id: 133, ip: ".33", planned: true}
+    - vlan: "40"
+      note: "routed out through himalia"
+      columns:
+        - - name: "Games"
+            guests:
+              - {name: "himalia", note: "game gateway · WireGuard", icons: [wireguard], id: 140, ip: ".2"}
+              - {name: "thebe", note: "Dragonwilds", icons: [glyph-game], id: 141, ip: ".10"}
+              - {name: "metis", note: "Valheim", icons: [glyph-game], id: 142, ip: ".11"}
+              - {name: "adrastea", note: "Minecraft · Crafty", icons: [crafty-controller], id: 143, ip: ".12"}
+              - {name: "carme", note: "Foundry VTT", icons: [glyph-game], id: 144, ip: ".13"}
+
+saturn:
+  name: "saturn"
+  type: "planned Proxmox host"
+  model: "ASRock Rack X570D4U · Sliger CX2130a 2U"
+  ip: "10.0.1.12 · 10.0.30.6"
+  os: "network rack · 2.5GbE to the core switch · runs the 24/7 guests"
+  hw:
+    - {icon: glyph-cpu, label: "CPU",    value: "Ryzen 7 5700X", sub: "ECO mode 45 W"}
+    - {icon: glyph-ram, label: "MEMORY", value: "64 GB ECC",     sub: "UDIMM"}
+    - {icon: glyph-ssd, label: "SSD",    value: "2× 1 TB NVMe",  sub: "mirror · guest disks"}
+    - {icon: glyph-ssd, label: "SSD",    value: "2× 2 TB SATA",  sub: "mirror · hyperion backups"}
+    - {icon: glyph-ups, label: "UPS",    value: "Tripp Lite 1500", sub: "SMART1500RM2U · NUT netups"}
+  guests:
+    - {name: "titan", was: "phobos", note: "Home Assistant", icon: home-assistant}
+    - {name: "mimas", was: "elara", note: "Personal VPN", icon: wireguard}
+    - {name: "dione", was: "leda", note: "Tangle Crew", icon: discord}
+    - {name: "tethys", note: "Network boot", icon: glyph-app}
+    - {name: "rhea", note: "OpenBao secrets", icon: openbao}
+    - {name: "iapetus", note: "Semaphore runbooks", icon: semaphore}
+    - {name: "enceladus", note: "Caddy · Tunnel · Dockhand", icon: caddy, new: true}
+    - {name: "hyperion", note: "Proxmox Backup Server", icon: proxmox, new: true}
+  extra:
+    - {name: "sinope", note: "Raspberry Pi QDevice · 10.0.1.16", icon: raspberry-pi}
